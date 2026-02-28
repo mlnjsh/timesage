@@ -1,10 +1,5 @@
 pyproject.toml
 timesage/__init__.py
-timesage.egg-info/PKG-INFO
-timesage.egg-info/SOURCES.txt
-timesage.egg-info/dependency_links.txt
-timesage.egg-info/requires.txt
-timesage.egg-info/top_level.txt
 timesage/core/__init__.py
 timesage/core/result.py
 timesage/core/timeseries.py
@@ -32,3 +27,8 @@ timesage/plot/theme.py
 timesage/plot/timeplots.py
 timesage/utils/__init__.py
 timesage/utils/helpers.py
+timesage_ts.egg-info/PKG-INFO
+timesage_ts.egg-info/SOURCES.txt
+timesage_ts.egg-info/dependency_links.txt
+timesage_ts.egg-info/requires.txt
+timesage_ts.egg-info/top_level.txt
