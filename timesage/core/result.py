@@ -1,0 +1,206 @@
+"""ForecastResult -- container for forecast output with built-in interpretation."""
+
+from dataclasses import dataclass, field
+from typing import Optional, Dict, Any, List
+
+import numpy as np
+import pandas as pd
+
+
+@dataclass
+class ForecastResult:
+    """Container for forecast results with metrics, interpretation, and plotting.
+
+    Attributes
+    ----------
+    forecast : pd.Series
+        The forecasted values for the future horizon.
+    actual : pd.Series, optional
+        Actual values from the test set.
+    train : pd.Series, optional
+        Training data used for fitting.
+    test_predictions : pd.Series, optional
+        Model predictions on the test set (for computing metrics).
+    confidence_lower : pd.Series, optional
+        Lower bound of the confidence interval.
+    confidence_upper : pd.Series, optional
+        Upper bound of the confidence interval.
+    model_name : str
+        Name of the model used.
+    feature_importance : dict, optional
+        Feature importance scores (for ML models).
+    residuals : pd.Series, optional
+        Model residuals from the fit.
+    """
+
+    forecast: pd.Series
+    actual: Optional[pd.Series] = None
+    train: Optional[pd.Series] = None
+    test_predictions: Optional[pd.Series] = None
+    confidence_lower: Optional[pd.Series] = None
+    confidence_upper: Optional[pd.Series] = None
+    model_name: str = "Unknown"
+    feature_importance: Optional[Dict[str, float]] = None
+    residuals: Optional[pd.Series] = None
+    _metrics: Optional[Dict[str, float]] = field(default=None, repr=False)
+
+    @property
+    def metrics(self) -> Dict[str, float]:
+        """Compute and cache forecast accuracy metrics."""
+        if self._metrics is None:
+            self._metrics = self._compute_metrics()
+        return self._metrics
+
+    def _compute_metrics(self) -> Dict[str, float]:
+        """Compute MAE, RMSE, MSE, MedAE, MAPE, R2, and MASE."""
+        if self.actual is None or self.test_predictions is None:
+            return {}
+
+        a = self.actual.values
+        p = self.test_predictions.values
+        min_len = min(len(a), len(p))
+        a, p = a[:min_len], p[:min_len]
+
+        errors = a - p
+        abs_errors = np.abs(errors)
+
+        metrics = {
+            "MAE": np.mean(abs_errors),
+            "RMSE": np.sqrt(np.mean(errors ** 2)),
+            "MSE": np.mean(errors ** 2),
+            "MedAE": np.median(abs_errors),
+        }
+
+        # MAPE (avoid division by zero)
+        mask = a != 0
+        if mask.any():
+            metrics["MAPE"] = 100 * np.mean(np.abs(errors[mask] / a[mask]))
+
+        # R-squared
+        ss_res = np.sum(errors ** 2)
+        ss_tot = np.sum((a - np.mean(a)) ** 2)
+        metrics["R2"] = 1 - ss_res / ss_tot if ss_tot > 0 else 0
+
+        # MASE (vs naive forecast)
+        if self.train is not None and len(self.train) > 1:
+            naive_errors = np.abs(np.diff(self.train.values))
+            mae_naive = np.mean(naive_errors)
+            if mae_naive > 0:
+                metrics["MASE"] = metrics["MAE"] / mae_naive
+
+        return metrics
+
+    def _build_interpretation(self) -> Dict[str, str]:
+        """Build plain-English interpretations of every metric."""
+        m = self.metrics
+        interp = {}
+
+        # Accuracy assessment based on MAPE
+        mape = m.get("MAPE", None)
+        if mape is not None:
+            if mape < 5:
+                level = "Excellent"
+            elif mape < 10:
+                level = "Good"
+            elif mape < 20:
+                level = "Moderate"
+            else:
+                level = "Poor"
+            interp["accuracy"] = (
+                "[%s] The model achieves %s accuracy with an "
+                "average error of %.1f%%. For every 100 units of actual value, "
+                "the prediction is typically off by about %.1f units."
+            ) % (level, level.lower(), mape, mape)
+
+        # Error pattern (consistency of errors)
+        mae = m.get("MAE", 0)
+        rmse = m.get("RMSE", 0)
+        if mae > 0:
+            ratio = rmse / mae
+            if ratio < 1.2:
+                pattern = "very CONSISTENT"
+            elif ratio < 1.5:
+                pattern = "CONSISTENT"
+            else:
+                pattern = "INCONSISTENT (has outlier errors)"
+            interp["error_pattern"] = (
+                "The model has %s errors (RMSE/MAE ratio = %.2f)." % (pattern, ratio)
+            )
+
+        # Naive benchmark comparison
+        mase = m.get("MASE", None)
+        if mase is not None:
+            pct = (1 - mase) * 100
+            if mase < 1:
+                interp["benchmark"] = (
+                    "The model OUTPERFORMS a naive forecast by %.0f%% "
+                    "(MASE = %.2f). It adds significant value beyond simple approaches."
+                ) % (pct, mase)
+            else:
+                interp["benchmark"] = (
+                    "The model UNDERPERFORMS a naive forecast "
+                    "(MASE = %.2f). "
+                    "A simple repeat-last-value strategy would be better."
+                ) % mase
+
+        # Feature importance summary
+        if self.feature_importance:
+            top = sorted(self.feature_importance.items(), key=lambda x: x[1], reverse=True)[:5]
+            parts = []
+            for k, v in top:
+                parts.append("%r (%.1f%%)" % (k, 100 * v))
+            interp["drivers"] = "Top predictive features: %s." % ", ".join(parts)
+
+        # Forecast direction
+        if len(self.forecast) > 1:
+            first = self.forecast.iloc[0]
+            last = self.forecast.iloc[-1]
+            if first > 0:
+                change_pct = (last - first) / first * 100
+                direction = "UPWARD" if change_pct > 0 else "DOWNWARD"
+                interp["direction"] = (
+                    "The forecast shows an %s trend of %+.1f%% "
+                    "over the prediction horizon. Peak: %.2f."
+                ) % (direction, change_pct, self.forecast.max())
+
+        return interp
+
+    def interpret(self):
+        """Print plain-English interpretation of forecast results."""
+        from rich.console import Console
+        from rich.panel import Panel
+
+        console = Console()
+        interp = self._build_interpretation()
+
+        sections = []
+        labels = {
+            "accuracy": "Overall Accuracy",
+            "error_pattern": "Error Pattern",
+            "benchmark": "Benchmark",
+            "drivers": "Key Drivers",
+            "direction": "Forecast Direction",
+        }
+
+        for key, label in labels.items():
+            if key in interp:
+                sections.append("  [bold]%s:[/bold]\n  %s" % (label, interp[key]))
+
+        content = "\n\n".join(sections)
+        console.print(Panel(
+            content,
+            title="[bold]%s Forecast Interpretation[/bold]" % self.model_name,
+            border_style="green",
+            padding=(1, 2),
+        ))
+
+    def summary(self) -> pd.DataFrame:
+        """Return metrics as a single-row DataFrame."""
+        return pd.DataFrame([self.metrics], index=[self.model_name])
+
+    def plot(self, figsize=(14, 5)):
+        """Plot forecast results with actual vs predicted and confidence intervals."""
+        from timesage.plot.theme import sage_theme
+        from timesage.plot.timeplots import plot_forecast
+        sage_theme()
+        return plot_forecast(self, figsize=figsize)

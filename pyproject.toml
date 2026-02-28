@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "timesage"
+version = "0.1.0"
+description = "The Wise Time Series Library - Beautiful EDA, All Models, Plain-English Interpretation"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [{name = "Milan Amrut Joshi", email = "mlnjsh@gmail.com"}]
+keywords = ["time-series", "forecasting", "eda", "machine-learning", "statistics"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.21",
+    "pandas>=1.4",
+    "matplotlib>=3.5",
+    "scipy>=1.7",
+    "scikit-learn>=1.0",
+    "statsmodels>=0.13",
+    "rich>=12.0",
+]
+
+[project.optional-dependencies]
+full = ["xgboost>=1.6", "lightgbm>=3.3", "plotly>=5.0", "kaleido"]
+ml = ["xgboost>=1.6", "lightgbm>=3.3"]
+interactive = ["plotly>=5.0", "kaleido"]
+dev = ["pytest>=7.0", "ruff", "mypy"]
+
+[project.urls]
+Homepage = "https://github.com/mlnjsh/timesage"
+Repository = "https://github.com/mlnjsh/timesage"
+Issues = "https://github.com/mlnjsh/timesage/issues"
+
+[tool.setuptools.packages.find]
+include = ["timesage*"]

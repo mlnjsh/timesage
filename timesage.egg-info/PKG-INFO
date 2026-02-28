@@ -1,0 +1,43 @@
+Metadata-Version: 2.4
+Name: timesage
+Version: 0.1.0
+Summary: The Wise Time Series Library - Beautiful EDA, All Models, Plain-English Interpretation
+Author-email: Milan Amrut Joshi <mlnjsh@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/mlnjsh/timesage
+Project-URL: Repository, https://github.com/mlnjsh/timesage
+Project-URL: Issues, https://github.com/mlnjsh/timesage/issues
+Keywords: time-series,forecasting,eda,machine-learning,statistics
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.21
+Requires-Dist: pandas>=1.4
+Requires-Dist: matplotlib>=3.5
+Requires-Dist: scipy>=1.7
+Requires-Dist: scikit-learn>=1.0
+Requires-Dist: statsmodels>=0.13
+Requires-Dist: rich>=12.0
+Provides-Extra: full
+Requires-Dist: xgboost>=1.6; extra == "full"
+Requires-Dist: lightgbm>=3.3; extra == "full"
+Requires-Dist: plotly>=5.0; extra == "full"
+Requires-Dist: kaleido; extra == "full"
+Provides-Extra: ml
+Requires-Dist: xgboost>=1.6; extra == "ml"
+Requires-Dist: lightgbm>=3.3; extra == "ml"
+Provides-Extra: interactive
+Requires-Dist: plotly>=5.0; extra == "interactive"
+Requires-Dist: kaleido; extra == "interactive"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
