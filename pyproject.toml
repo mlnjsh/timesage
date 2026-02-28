@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timesage-ts"
-version = "0.1.0"
+version = "0.2.0"
 description = "The Wise Time Series Library - Beautiful EDA, All Models, Plain-English Interpretation"
 readme = "README.md"
 license = {text = "MIT"}
@@ -42,6 +42,7 @@ dev = ["pytest>=7.0", "ruff", "mypy"]
 Homepage = "https://github.com/mlnjsh/timesage"
 Repository = "https://github.com/mlnjsh/timesage"
 Issues = "https://github.com/mlnjsh/timesage/issues"
+Documentation = "https://github.com/mlnjsh/timesage/tree/master/docs"
 
 [tool.setuptools.packages.find]
 include = ["timesage*"]
