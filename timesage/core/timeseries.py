@@ -398,23 +398,28 @@ class TimeSeries:
                 pass
 
         results = []
+        forecast_results = {}
         for m in models:
             try:
                 t0 = time.time()
                 result = self.forecast(horizon=1, model=m, test_size=test_size, verbose=False)
                 elapsed = time.time() - t0
                 metrics = result.metrics
+                forecast_results[result.model_name] = result
                 results.append({
                     "Model": result.model_name,
                     "MAE": metrics.get("MAE", np.nan),
                     "RMSE": metrics.get("RMSE", np.nan),
                     "MAPE": metrics.get("MAPE", np.nan),
+                    "R2": metrics.get("R2", np.nan),
+                    "MASE": metrics.get("MASE", np.nan),
                     "Time (s)": elapsed,
                 })
             except Exception as e:
                 results.append({
                     "Model": m, "MAE": np.nan, "RMSE": np.nan,
-                    "MAPE": np.nan, "Time (s)": 0, "Error": str(e),
+                    "MAPE": np.nan, "R2": np.nan, "MASE": np.nan,
+                    "Time (s)": 0, "Error": str(e),
                 })
 
         df = pd.DataFrame(results).sort_values("MAPE").reset_index(drop=True)
@@ -429,22 +434,33 @@ class TimeSeries:
             table.add_column("MAE", justify="right")
             table.add_column("RMSE", justify="right")
             table.add_column("MAPE", justify="right")
+            table.add_column("R2", justify="right")
+            table.add_column("MASE", justify="right")
             table.add_column("Time (s)", justify="right")
             for i, row in df.iterrows():
                 style = "bold green" if i == 1 else ""
+                r2_str = "%.4f" % row["R2"] if not np.isnan(row["R2"]) else "N/A"
+                mase_str = "%.4f" % row["MASE"] if not np.isnan(row["MASE"]) else "N/A"
                 table.add_row(
                     str(i), row["Model"],
                     "%.4f" % row["MAE"], "%.4f" % row["RMSE"],
-                    "%.2f%%" % row["MAPE"], "%.2f" % row["Time (s)"],
+                    "%.2f%%" % row["MAPE"], r2_str, mase_str,
+                    "%.2f" % row["Time (s)"],
                     style=style,
                 )
             console.print(table)
+
+            # Winner summary with interpretation
             if not df.empty:
                 winner = df.iloc[0]
+                winner_name = winner["Model"]
                 console.print(
                     "\n  [bold green]Winner: %s (MAPE: %.2f%%)[/bold green]\n" % (
-                        winner["Model"], winner["MAPE"]
+                        winner_name, winner["MAPE"]
                     )
                 )
+                # Print metric interpretation for the winning model
+                if winner_name in forecast_results:
+                    forecast_results[winner_name].interpret_metrics(verbose=True)
 
         return df

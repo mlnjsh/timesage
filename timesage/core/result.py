@@ -232,9 +232,161 @@ class ForecastResult:
         """Return metrics as a single-row DataFrame."""
         return pd.DataFrame([self.metrics], index=[self.model_name])
 
+    def interpret_metrics(self, verbose: bool = True) -> dict:
+        """Explain every metric in plain English with context.
+
+        Returns a dict mapping metric names to interpretation strings.
+        """
+        m = self.metrics
+        if not m:
+            if verbose:
+                print("No metrics available (missing actual or test_predictions).")
+            return {}
+
+        explanations = {}
+
+        # MAE
+        if "MAE" in m:
+            v = m["MAE"]
+            explanations["MAE"] = (
+                "Mean Absolute Error = %.4f. "
+                "On average, predictions are off by %.4f units from the actual values. "
+                "Lower is better." % (v, v)
+            )
+
+        # RMSE
+        if "RMSE" in m:
+            v = m["RMSE"]
+            mae = m.get("MAE", v)
+            ratio = v / mae if mae > 0 else 1
+            if ratio < 1.2:
+                pattern = "Errors are very consistent (few large outlier errors)."
+            elif ratio < 1.5:
+                pattern = "Errors are fairly consistent."
+            else:
+                pattern = "Some predictions have large errors (outlier spikes present)."
+            explanations["RMSE"] = (
+                "Root Mean Squared Error = %.4f. "
+                "Like MAE but penalizes large errors more heavily. "
+                "RMSE/MAE ratio = %.2f. %s" % (v, ratio, pattern)
+            )
+
+        # MSE
+        if "MSE" in m:
+            explanations["MSE"] = (
+                "Mean Squared Error = %.4f. "
+                "The squared version of RMSE. Useful for optimization but harder to interpret directly."
+                % m["MSE"]
+            )
+
+        # MedAE
+        if "MedAE" in m:
+            v = m["MedAE"]
+            mae = m.get("MAE", v)
+            if v < mae * 0.8:
+                note = "MedAE is much lower than MAE, confirming a few large errors skew the average."
+            else:
+                note = "MedAE is close to MAE, indicating errors are evenly distributed."
+            explanations["MedAE"] = (
+                "Median Absolute Error = %.4f. "
+                "The typical (middle) error, robust to outliers. %s" % (v, note)
+            )
+
+        # MAPE
+        if "MAPE" in m:
+            v = m["MAPE"]
+            if v < 3:
+                level, desc = "Exceptional", "near-perfect predictions"
+            elif v < 5:
+                level, desc = "Excellent", "highly accurate predictions"
+            elif v < 10:
+                level, desc = "Very Good", "strong predictive performance"
+            elif v < 15:
+                level, desc = "Good", "solid predictions for most use cases"
+            elif v < 25:
+                level, desc = "Fair", "useful but has room for improvement"
+            elif v < 40:
+                level, desc = "Needs Work", "consider trying other models or features"
+            else:
+                level, desc = "Poor", "the model struggles with this data"
+            explanations["MAPE"] = (
+                "Mean Absolute Percentage Error = %.2f%%. "
+                "[%s] For every 100 units of actual value, the prediction is off by ~%.1f units. "
+                "Rating: %s."
+                % (v, level, v, desc)
+            )
+
+        # R2
+        if "R2" in m:
+            v = m["R2"]
+            pct = v * 100
+            if v > 0.95:
+                quality = "The model explains almost all variance -- excellent fit."
+            elif v > 0.85:
+                quality = "The model captures most patterns well."
+            elif v > 0.70:
+                quality = "Reasonable fit, but significant unexplained variance remains."
+            elif v > 0.50:
+                quality = "Moderate fit. The model misses many patterns."
+            else:
+                quality = "Weak fit. The model explains less than half the variance."
+            explanations["R2"] = (
+                "R-squared = %.4f. "
+                "The model explains %.1f%% of the variance in the data. "
+                "%s" % (v, pct, quality)
+            )
+
+        # MASE
+        if "MASE" in m:
+            v = m["MASE"]
+            if v < 0.5:
+                verdict = "Dramatically outperforms the naive baseline."
+            elif v < 1.0:
+                pct_better = (1 - v) * 100
+                verdict = "Outperforms naive forecast by %.0f%%. The model adds real value." % pct_better
+            elif v == 1.0:
+                verdict = "Performs exactly like a naive repeat-last-value forecast."
+            else:
+                verdict = "Underperforms naive forecast. A simple baseline would be better."
+            explanations["MASE"] = (
+                "Mean Absolute Scaled Error = %.4f. "
+                "Compares the model against a naive (repeat last value) forecast. "
+                "MASE < 1 means better than naive. %s" % (v, verdict)
+            )
+
+        if verbose:
+            _print_metric_explanations(explanations, self.model_name)
+
+        return explanations
+
     def plot(self, figsize=(14, 5)):
         """Plot forecast results with actual vs predicted and confidence intervals."""
         from timesage.plot.theme import sage_theme
         from timesage.plot.timeplots import plot_forecast
         sage_theme()
         return plot_forecast(self, figsize=figsize)
+
+
+
+def _print_metric_explanations(explanations: dict, model_name: str = "Model"):
+    """Pretty-print metric explanations."""
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+
+        console = Console()
+        lines = []
+        for metric, explanation in explanations.items():
+            lines.append("[bold cyan]%s:[/bold cyan]  %s" % (metric, explanation))
+
+        content = "\n\n".join(lines)
+        console.print(Panel(
+            content,
+            title="[bold]%s -- Metrics Explained[/bold]" % model_name,
+            border_style="blue",
+            padding=(1, 2),
+        ))
+    except ImportError:
+        print("=== %s -- Metrics Explained ===" % model_name)
+        for metric, explanation in explanations.items():
+            print("  %s: %s" % (metric, explanation))

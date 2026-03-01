@@ -19,7 +19,7 @@ TimeSage makes time series analysis effortless:
 
 """
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 __author__ = "Milan Amrut Joshi"
 
 from timesage.core.timeseries import TimeSeries
