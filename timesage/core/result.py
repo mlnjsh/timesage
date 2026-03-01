@@ -41,9 +41,18 @@ class ForecastResult:
     confidence_upper: Optional[pd.Series] = None
     model_name: str = "Unknown"
     feature_importance: Optional[Dict[str, float]] = None
-    residuals: Optional[pd.Series] = None
+    _residuals_raw: Optional[pd.Series] = None
     _metrics: Optional[Dict[str, float]] = field(default=None, repr=False)
 
+
+    @property
+    def residuals(self) -> Optional[pd.Series]:
+        """Return residuals, computing from actual - test_predictions as fallback."""
+        if self._residuals_raw is not None:
+            return self._residuals_raw
+        if self.actual is not None and self.test_predictions is not None:
+            return self.actual - self.test_predictions
+        return None
     @property
     def metrics(self) -> Dict[str, float]:
         """Compute and cache forecast accuracy metrics."""

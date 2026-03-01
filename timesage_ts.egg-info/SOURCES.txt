@@ -1,4 +1,16 @@
+MANIFEST.in
+README.md
 pyproject.toml
+docs/api-reference.md
+docs/examples.md
+docs/faq.md
+docs/features.md
+docs/getting-started.md
+docs/index.md
+docs/interpretation.md
+docs/models.md
+docs/plotting.md
+docs/user-guide.md
 timesage/__init__.py
 timesage/core/__init__.py
 timesage/core/result.py
