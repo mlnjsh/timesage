@@ -26,10 +26,14 @@ TimeSage makes time series forecasting effortless. Go from raw data to a forecas
 
 - **3-Line Forecasting** -- Load data, call `forecast()`, done. TimeSage handles model selection, feature engineering, and evaluation automatically.
 - **Plain-English Interpretation** -- Call `result.interpret()` and get a human-readable explanation of accuracy, error patterns, key drivers, and forecast direction.
-- **Beautiful Plots** -- Publication-ready visualizations with a custom Sage theme. Decomposition plots, forecast overlays, diagnostics, and more.
+- **Model Summary & Diagnostics** -- `result.model_summary()` shows the full SARIMAX-style results table (coefficients, p-values, AIC/BIC, Ljung-Box, Jarque-Bera). `result.interpret_summary()` explains every number in plain English.
+- **Metric Interpretation** -- `result.interpret_metrics()` explains what each metric (MAE, RMSE, MAPE, R2, MASE) means for your specific forecast with accuracy ratings.
+- **Beautiful Plots** -- Publication-ready visualizations with a custom Sage theme. All plot functions accept an optional `ax` parameter for subplot composability.
 - **All Models, One API** -- ARIMA, ETS, Theta, Random Forest, XGBoost, and LightGBM all share the same `series.forecast(model="...")` interface.
 - **Smart EDA** -- Automated exploratory data analysis with `series.eda()`: stationarity tests, seasonality detection, decomposition, and descriptive statistics.
-- **Automatic Feature Engineering** -- ML models get lag features, rolling statistics, and calendar features created automatically. No manual work required.
+- **ACF/PACF Interpretation** -- `series.interpret_acf()` analyzes autocorrelation patterns and suggests ARIMA orders with plain-English explanations.
+- **Residual Diagnostics** -- `diagnose_residuals()` tests for bias, normality, autocorrelation, and heteroscedasticity with actionable recommendations.
+- **Automatic Feature Engineering** -- ML models get lag features, rolling statistics, and calendar features created automatically.
 
 ## Installation
 
@@ -59,13 +63,14 @@ pip install timesage-ts[interactive]  # Plotly interactive charts
 ```python
 import timesage as ts
 
-# 1. Create a TimeSeries from your data
-series = ts.TimeSeries(df, target="sales", time="date", freq="D")
+# 1. Load built-in data
+data = ts.load_airline()
+series = ts.TimeSeries(data, target="passengers")
 
 # 2. Explore your data
 series.eda()
 
-# 3. Forecast the next 30 days (auto-selects the best model)
+# 3. Forecast the next 30 periods (auto-selects the best model)
 result = series.forecast(horizon=30)
 
 # 4. Get a plain-English interpretation
@@ -75,15 +80,61 @@ result.interpret()
 result.plot()
 ```
 
-### What `interpret()` prints
+## Interpretation & Diagnostics
 
+TimeSage gives you multiple levels of insight into your forecasts:
+
+### Forecast Interpretation
+
+```python
+result.interpret()         # Overall accuracy, error pattern, benchmark, direction
 ```
-Forecast Interpretation
-=======================
-Overall accuracy : Excellent (MAPE = 3.2%)
-Error consistency: Errors are uniform -- no major outlier spikes.
-vs. Naive baseline: Model is 2.4x better than a naive repeat-last-value forecast.
-Forecast trend  : Upward -- the series is predicted to increase over the horizon.
+
+### Metric-by-Metric Explanation
+
+```python
+result.interpret_metrics()  # Explains MAE, RMSE, MAPE, R2, MASE with ratings
+```
+
+Output includes accuracy ratings (Exceptional/Excellent/Good/Fair/Poor), RMSE/MAE consistency analysis, naive baseline comparison, and R2 variance explanation.
+
+### Full Model Summary (like statsmodels output)
+
+```python
+result.model_summary()      # Coefficient table, AIC/BIC, diagnostic tests
+```
+
+Shows the SARIMAX-style results table for statistical models (coefficients with std err, z-scores, p-values, confidence intervals) and feature importance tables for ML models, plus Ljung-Box, Jarque-Bera, and heteroskedasticity diagnostic tests.
+
+### Interpret Every Number
+
+```python
+result.interpret_summary()  # Plain-English explanation of every number above
+```
+
+Explains what each AR/MA coefficient means, whether it's statistically significant, what AIC/BIC values tell you, what diagnostic test failures mean, and actionable recommendations.
+
+### ACF/PACF Analysis
+
+```python
+series.interpret_acf()      # Suggests ARIMA orders from autocorrelation patterns
+```
+
+### Residual Diagnostics
+
+```python
+from timesage.interpret import diagnose_residuals
+diagnose_residuals(result.residuals)  # Bias, normality, autocorrelation, variance tests
+```
+
+### Shortcut Properties
+
+```python
+result.mae    # Mean Absolute Error
+result.rmse   # Root Mean Squared Error
+result.mape   # Mean Absolute Percentage Error
+result.r2     # R-squared
+result.mase   # Mean Absolute Scaled Error
 ```
 
 ## Available Models
@@ -106,13 +157,24 @@ result = series.forecast(horizon=30, model="xgboost")
 result = series.forecast(horizon=30, model="auto")     # default
 ```
 
-### Comparing models
+### Comparing Models
 
 ```python
 comparison = series.compare_models(test_size=0.2)
 ```
 
-This runs every available model, evaluates each on a held-out test set, and returns a ranked DataFrame with MAE, RMSE, MAPE, and training time.
+Runs every available model, evaluates each on a held-out test set, and returns a ranked table with MAE, RMSE, MAPE, R2, MASE, and training time. Automatically prints metric interpretation for the winning model.
+
+## Built-in Datasets
+
+```python
+ts.list_datasets()            # See all available datasets
+data = ts.load_airline()      # Classic airline passengers
+data = ts.load_sunspots()     # Sunspot activity
+data = ts.load_energy()       # Energy consumption
+data = ts.load_synthetic_trend()     # Synthetic with trend
+data = ts.load_synthetic_seasonal()  # Synthetic with seasonality
+```
 
 ## EDA in One Line
 
@@ -122,7 +184,7 @@ series.eda()
 
 This runs:
 - Descriptive statistics (mean, std, min, max, skew, kurtosis)
-- Stationarity testing (Augmented Dickey-Fuller)
+- Stationarity testing (Augmented Dickey-Fuller + KPSS)
 - Seasonality detection (autocorrelation analysis)
 - Trend-seasonal decomposition
 - Distribution and time plot visualizations
