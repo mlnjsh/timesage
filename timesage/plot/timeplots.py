@@ -7,9 +7,13 @@ from timesage.plot.theme import COLORS
 
 
 def plot_series(series, show_trend=False, show_outliers=False,
-                title="Time Series", figsize=(14, 5), **kwargs):
+                title="Time Series", figsize=(14, 5), ax=None, **kwargs):
     """Plot a time series with optional trend and outlier highlighting."""
-    fig, ax = plt.subplots(figsize=figsize)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+
     ax.plot(series.index, series.values, color=COLORS["primary"],
             linewidth=1.5, alpha=0.9, label=title)
 
@@ -31,8 +35,6 @@ def plot_series(series, show_trend=False, show_outliers=False,
     ax.set_xlabel("Date")
     ax.set_ylabel("Value")
     ax.legend(framealpha=0.9)
-    plt.tight_layout()
-    plt.show()
     return fig
 
 
@@ -54,13 +56,15 @@ def plot_components(decomposition, title="Decomposition", figsize=(14, 10)):
 
     fig.suptitle("%s -- Seasonal Decomposition" % title, fontsize=14, fontweight="bold")
     plt.tight_layout()
-    plt.show()
     return fig
 
 
-def plot_forecast(result, figsize=(14, 5)):
+def plot_forecast(result, figsize=(14, 5), ax=None):
     """Plot forecast results with actuals, predictions, and confidence intervals."""
-    fig, ax = plt.subplots(figsize=figsize)
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
 
     # Plot training data
     if result.train is not None:
@@ -94,6 +98,4 @@ def plot_forecast(result, figsize=(14, 5)):
     ax.set_xlabel("Date")
     ax.set_ylabel("Value")
     ax.legend(framealpha=0.9)
-    plt.tight_layout()
-    plt.show()
     return fig
