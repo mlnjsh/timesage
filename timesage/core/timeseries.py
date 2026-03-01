@@ -348,7 +348,7 @@ class TimeSeries:
             confidence_upper=ci[1] if ci else None,
             model_name=forecaster.__class__.__name__.replace("Forecaster", ""),
             feature_importance=forecaster.feature_importance(),
-            residuals=forecaster.residuals(),
+            _residuals_raw=forecaster.residuals(),
         )
 
         if verbose:

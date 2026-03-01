@@ -13,6 +13,11 @@ def diagnose_residuals(residuals: pd.Series, verbose: bool = True) -> dict[str, 
     Tests for: normality, autocorrelation, heteroscedasticity, bias.
     Returns plain-English explanation of what each test means.
     """
+    if residuals is None:
+        raise ValueError(
+            'Residuals are None. This can happen when the model does not store residuals. '
+            'You can compute them manually: residuals = result.actual - result.test_predictions'
+        )
     r = residuals.dropna()
     results = {}
 
