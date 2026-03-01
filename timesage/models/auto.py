@@ -84,3 +84,9 @@ class AutoForecaster:
     def residuals(self) -> Optional[pd.Series]:
         """Return residuals from the best model."""
         return self._best_model.residuals()
+
+    def model_summary(self) -> Dict:
+        """Return model summary from the best model."""
+        if self._best_model is not None and hasattr(self._best_model, "model_summary"):
+            return self._best_model.model_summary()
+        return {"model_type": "Auto", "raw_summary": None}

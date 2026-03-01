@@ -113,6 +113,41 @@ class _BaseMLForecaster:
     def residuals(self) -> Optional[pd.Series]:
         return self._residuals
 
+    def model_summary(self) -> Dict:
+        """Return structured summary for ML model."""
+        from timesage.models.statistical import _compute_residual_diagnostics
+
+        info = {
+            "model_type": self.__class__.__name__.replace("Forecaster", ""),
+            "nobs": int(len(self._series)) if self._series is not None else 0,
+            "n_features": len(self._feature_names) if self._feature_names else 0,
+        }
+
+        # Hyperparameters
+        if self._model is not None and hasattr(self._model, "get_params"):
+            info["hyperparameters"] = {
+                k: v for k, v in self._model.get_params().items()
+                if v is not None and k not in ("random_state", "verbose", "verbosity", "n_jobs")
+            }
+
+        # Feature importance as coefficients table (sorted by importance)
+        coefficients = []
+        if self._importance:
+            sorted_imp = sorted(self._importance.items(), key=lambda x: x[1], reverse=True)
+            for name, imp in sorted_imp:
+                coefficients.append({
+                    "name": name,
+                    "coef": float(imp),
+                    "std_err": None, "z": None, "p_value": None,
+                    "ci_lower": None, "ci_upper": None,
+                })
+        info["coefficients"] = coefficients
+
+        # Residual diagnostics
+        info["diagnostics"] = _compute_residual_diagnostics(self._residuals)
+        info["raw_summary"] = None
+        return info
+
 
 class RandomForestForecaster(_BaseMLForecaster):
     """Random Forest time series forecaster."""

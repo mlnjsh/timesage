@@ -354,6 +354,7 @@ class TimeSeries:
             model_name=forecaster.__class__.__name__.replace("Forecaster", ""),
             feature_importance=forecaster.feature_importance(),
             _residuals_raw=forecaster.residuals(),
+            _forecaster=forecaster,
         )
 
         if verbose:
