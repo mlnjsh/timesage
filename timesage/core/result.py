@@ -54,6 +54,31 @@ class ForecastResult:
             return self.actual - self.test_predictions
         return None
     @property
+    def mae(self) -> Optional[float]:
+        """Mean Absolute Error."""
+        return self.metrics.get('MAE')
+
+    @property
+    def rmse(self) -> Optional[float]:
+        """Root Mean Squared Error."""
+        return self.metrics.get('RMSE')
+
+    @property
+    def mape(self) -> Optional[float]:
+        """Mean Absolute Percentage Error."""
+        return self.metrics.get('MAPE')
+
+    @property
+    def r2(self) -> Optional[float]:
+        """R-squared score."""
+        return self.metrics.get('R2')
+
+    @property
+    def mase(self) -> Optional[float]:
+        """Mean Absolute Scaled Error."""
+        return self.metrics.get('MASE')
+
+    @property
     def metrics(self) -> Dict[str, float]:
         """Compute and cache forecast accuracy metrics."""
         if self._metrics is None:
