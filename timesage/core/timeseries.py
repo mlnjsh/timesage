@@ -258,6 +258,11 @@ class TimeSeries:
         sage_theme()
         return plot_acf_pacf(self.values, lags=lags, figsize=figsize)
 
+    def interpret_acf(self, lags: int = 40, verbose: bool = True) -> dict:
+        """Analyze ACF/PACF and return plain-English interpretation with model suggestions."""
+        from timesage.plot.diagnostic import interpret_acf_pacf
+        return interpret_acf_pacf(self.values, lags=lags, verbose=verbose)
+
     def plot_decomposition(self, model: str = "additive",
                            period: Optional[int] = None, figsize=(14, 10)):
         """Plot seasonal decomposition."""
