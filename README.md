@@ -235,3 +235,34 @@ MIT License. See [LICENSE](LICENSE) for details.
 **Milan Amrut Joshi** ([mlnjsh@gmail.com](mailto:mlnjsh@gmail.com))
 
 GitHub: [github.com/mlnjsh/timesage](https://github.com/mlnjsh/timesage)
+
+
+---
+
+## Contributors & Domain Experts
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/mlnjsh">
+        <img src="https://github.com/mlnjsh.png" width="80px;" alt="Milan Amrut Joshi"/><br />
+        <sub><b>Milan Amrut Joshi</b></sub>
+      </a><br />
+      <sub>Project Author</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/alkaline-ml">
+        <img src="https://github.com/alkaline-ml.png" width="80px;" alt="alkaline-ml"/><br />
+        <sub><b>alkaline-ml</b></sub>
+      </a><br />
+      <sub>Creator of pmdarima (auto-ARIMA)</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/ourownstory">
+        <img src="https://github.com/ourownstory.png" width="80px;" alt="OurOwnStory"/><br />
+        <sub><b>OurOwnStory</b></sub>
+      </a><br />
+      <sub>Creator of NeuralProphet</sub>
+    </td>
+  </tr>
+</table>
